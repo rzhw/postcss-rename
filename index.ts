@@ -18,6 +18,7 @@ import * as postcss from 'postcss';
 import * as selectorParser from 'postcss-selector-parser';
 import { IdentitySubstitutionMap } from './css/identity-substitution-map';
 import { MinimalSubstitutionMap } from './css/minimal-substitution-map';
+import { RecordingSubstitutionMap } from './css/recording-substitution-map';
 import { SimpleSubstitutionMap } from './css/simple-substitution-map';
 import { SplittingSubstitutionMap } from './css/splitting-substitution-map';
 
@@ -37,7 +38,7 @@ module.exports = postcss.plugin('postcss-rename', (options: Partial<Options> = {
       renamingType: 'none',
     }, options);
 
-    const substitutionMap = RenamingType[opts.renamingType]();
+    const substitutionMap = new RecordingSubstitutionMap.Builder().withSubstitutionMap(RenamingType[opts.renamingType]()).build();
 
     const selectorProcessor = selectorParser(selectors => {
       selectors.walkClasses(classNode => {
@@ -50,5 +51,6 @@ module.exports = postcss.plugin('postcss-rename', (options: Partial<Options> = {
     root.walkRules(ruleNode => {
       return selectorProcessor.process(ruleNode);
     });
+    console.log(substitutionMap.getMappings().toJSON());
   };
 });
