@@ -15,13 +15,17 @@
  */
 
 import {promises as fs} from 'fs';
+import * as mockFs from 'mock-fs';
 import * as path from 'path';
 import * as postcss from 'postcss';
 
 const plugin = require('../');
 
-async function run(input: string, output: string, opts?: Object) {
-  const result = await postcss([plugin(opts)]).process(input, { from: undefined });
+async function run(input: string, opts?: Object) {
+  return await postcss([plugin(opts)]).process(input, { from: undefined });
+}
+
+function assertPostcss(result: postcss.Result, output: string) {
   expect(result.css).toEqual(output);
   expect(result.warnings()).toHaveLength(0);
 }
@@ -32,17 +36,41 @@ async function read(filename: string) {
 }
 
 it('does nothing with no options', async () => {
-  await run(await read('default.css'), await read('default.css'));
+  const input = await read('default.css');
+  const expectedOutput = input;
+  
+  assertPostcss(await run(input), expectedOutput);
 });
 
 it('does nothing with none renaming type', async () => {
-  await run(await read('default.css'), await read('default.css'), { renamingType: 'none' });
+  const input = await read('default.css');
+  const expectedOutput = input;
+
+  assertPostcss(await run(input, { renamingType: 'none' }), expectedOutput);
 });
 
 it('renames with debug renaming type', async () => {
-  await run(await read('default.css'), await read('default.debug.css'), { renamingType: 'debug' });
+  const input = await read('default.css');
+  const expectedOutput = await read('default.debug.css');
+
+  assertPostcss(await run(input, { renamingType: 'debug' }), expectedOutput);
 });
 
 it('renames with closure renaming type', async () => {
-  await run(await read('default.css'), await read('default.closure.css'), { renamingType: 'closure' });
+  const input = await read('default.css');
+  const expectedOutput = await read('default.closure.css');
+
+  assertPostcss(await run(input, { renamingType: 'closure' }), expectedOutput);
+});
+
+it('outputs renaming map as expected', async () => {
+  const input = await read('default.css');
+  const expectedOutput = await read('renaming_map.js');
+
+  mockFs({ 'temp/': {} });
+  await run(input, { renamingType: 'closure', outputRenamingMap: 'temp/renaming_map.js' });
+  const output = (await fs.readFile('temp/renaming_map.js')).toString();
+  mockFs.restore();
+
+  expect(output).toEqual(expectedOutput);
 });

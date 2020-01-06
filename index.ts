@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
 import * as postcss from 'postcss';
 import * as selectorParser from 'postcss-selector-parser';
 import { IdentitySubstitutionMap } from './css/identity-substitution-map';
 import { MinimalSubstitutionMap } from './css/minimal-substitution-map';
+import { OutputRenamingMapFormat } from './css/output-renaming-map-format';
 import { RecordingSubstitutionMap } from './css/recording-substitution-map';
 import { SimpleSubstitutionMap } from './css/simple-substitution-map';
 import { SplittingSubstitutionMap } from './css/splitting-substitution-map';
@@ -30,6 +32,7 @@ const RENAMING_TYPE = {
 
 interface Options {
   renamingType?: keyof typeof RENAMING_TYPE;
+  outputRenamingMap?: string | null;
 }
 
 module.exports = postcss.plugin(
@@ -39,6 +42,7 @@ module.exports = postcss.plugin(
       const opts = Object.assign(
         {
           renamingType: 'none',
+          outputRenamingMap: '',
         },
         options
       );
@@ -58,7 +62,17 @@ module.exports = postcss.plugin(
       root.walkRules(ruleNode => {
         return selectorProcessor.process(ruleNode);
       });
-      console.log(substitutionMap.getMappings().toJSON());
+
+      // Write the class substitution map to file, using same format as
+      // VariableMap in jscomp.
+      if (opts.outputRenamingMap) {
+        const renamingMap = new Map([...substitutionMap.getMappings()]);
+        const writer = fs.createWriteStream(opts.outputRenamingMap);
+        OutputRenamingMapFormat.CLOSURE_COMPILED_SPLIT_HYPHENS().writeRenamingMap(
+          renamingMap,
+          writer
+        );
+      }
     };
   }
 );
