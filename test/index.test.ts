@@ -20,8 +20,8 @@ import * as postcss from 'postcss';
 
 const plugin = require('../');
 
-async function run(input: string, output: string) {
-  const result = await postcss([plugin()]).process(input, { from: undefined });
+async function run(input: string, output: string, opts?: Object) {
+  const result = await postcss([plugin(opts)]).process(input, { from: undefined });
   expect(result.css).toEqual(output);
   expect(result.warnings()).toHaveLength(0);
 }
@@ -31,6 +31,18 @@ async function read(filename: string) {
   return (await fs.readFile(file)).toString();
 }
 
-it('does something', async () => {
-  await run(await read('default.css'), await read('default.splitting.css'));
+it('does nothing with no options', async () => {
+  await run(await read('default.css'), await read('default.css'));
+});
+
+it('does nothing with none renaming type', async () => {
+  await run(await read('default.css'), await read('default.css'), { renamingType: 'none' });
+});
+
+it('renames with debug renaming type', async () => {
+  await run(await read('default.css'), await read('default.debug.css'), { renamingType: 'debug' });
+});
+
+it('renames with closure renaming type', async () => {
+  await run(await read('default.css'), await read('default.closure.css'), { renamingType: 'closure' });
 });

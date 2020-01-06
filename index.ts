@@ -16,15 +16,28 @@
 
 import * as postcss from 'postcss';
 import * as selectorParser from 'postcss-selector-parser';
+import { IdentitySubstitutionMap } from './css/identity-substitution-map';
 import { MinimalSubstitutionMap } from './css/minimal-substitution-map';
+import { SimpleSubstitutionMap } from './css/simple-substitution-map';
 import { SplittingSubstitutionMap } from './css/splitting-substitution-map';
 
-module.exports = postcss.plugin('postcss-rename', () => {
-  console.error('This is a prototype, functionality may change at any moment.');
+const RenamingType = {
+  'none': () => new IdentitySubstitutionMap(),
+  'debug': () => new SplittingSubstitutionMap(new SimpleSubstitutionMap()),
+  'closure': () => new SplittingSubstitutionMap(new MinimalSubstitutionMap()),
+}
+
+type Options = {
+  renamingType?: keyof typeof RenamingType;
+}
+
+module.exports = postcss.plugin('postcss-rename', (options: Partial<Options> = {}) => {
   return (root: postcss.Root) => {
-    const substitutionMap = new SplittingSubstitutionMap(
-      new MinimalSubstitutionMap()
-    );
+    const opts = Object.assign({
+      renamingType: 'none',
+    }, options);
+
+    const substitutionMap = RenamingType[opts.renamingType]();
 
     const selectorProcessor = selectorParser(selectors => {
       selectors.walkClasses(classNode => {
