@@ -22,35 +22,43 @@ import { RecordingSubstitutionMap } from './css/recording-substitution-map';
 import { SimpleSubstitutionMap } from './css/simple-substitution-map';
 import { SplittingSubstitutionMap } from './css/splitting-substitution-map';
 
-const RenamingType = {
-  'none': () => new IdentitySubstitutionMap(),
-  'debug': () => new SplittingSubstitutionMap(new SimpleSubstitutionMap()),
-  'closure': () => new SplittingSubstitutionMap(new MinimalSubstitutionMap()),
+const RENAMING_TYPE = {
+  none: () => new IdentitySubstitutionMap(),
+  debug: () => new SplittingSubstitutionMap(new SimpleSubstitutionMap()),
+  closure: () => new SplittingSubstitutionMap(new MinimalSubstitutionMap()),
+};
+
+interface Options {
+  renamingType?: keyof typeof RENAMING_TYPE;
 }
 
-type Options = {
-  renamingType?: keyof typeof RenamingType;
-}
+module.exports = postcss.plugin(
+  'postcss-rename',
+  (options: Partial<Options> = {}) => {
+    return (root: postcss.Root) => {
+      const opts = Object.assign(
+        {
+          renamingType: 'none',
+        },
+        options
+      );
 
-module.exports = postcss.plugin('postcss-rename', (options: Partial<Options> = {}) => {
-  return (root: postcss.Root) => {
-    const opts = Object.assign({
-      renamingType: 'none',
-    }, options);
+      const substitutionMap = new RecordingSubstitutionMap.Builder()
+        .withSubstitutionMap(RENAMING_TYPE[opts.renamingType]())
+        .build();
 
-    const substitutionMap = new RecordingSubstitutionMap.Builder().withSubstitutionMap(RenamingType[opts.renamingType]()).build();
-
-    const selectorProcessor = selectorParser(selectors => {
-      selectors.walkClasses(classNode => {
-        if (classNode.value) {
-          classNode.value = substitutionMap.get(classNode.value);
-        }
+      const selectorProcessor = selectorParser(selectors => {
+        selectors.walkClasses(classNode => {
+          if (classNode.value) {
+            classNode.value = substitutionMap.get(classNode.value);
+          }
+        });
       });
-    });
 
-    root.walkRules(ruleNode => {
-      return selectorProcessor.process(ruleNode);
-    });
-    console.log(substitutionMap.getMappings().toJSON());
-  };
-});
+      root.walkRules(ruleNode => {
+        return selectorProcessor.process(ruleNode);
+      });
+      console.log(substitutionMap.getMappings().toJSON());
+    };
+  }
+);
