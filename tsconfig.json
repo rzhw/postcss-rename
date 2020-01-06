@@ -1,6 +1,7 @@
 {
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
+    "outDir": "build",
     "module": "commonjs",
     "lib": [
       "es5",

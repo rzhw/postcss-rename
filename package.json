@@ -7,11 +7,14 @@
     "css",
     "postcss-plugin"
   ],
+  "files": [
+    "build"
+  ],
   "scripts": {
     "test": "jest && eslint .",
     "check": "gts check",
     "clean": "gts clean",
-    "//compile": "tsc -p .",
+    "compile": "tsc -p .",
     "fix": "gts fix",
     "prepare": "npm run compile",
     "pretest": "npm run compile",
