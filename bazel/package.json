@@ -1,0 +1,28 @@
+{
+  "name": "postcss-rename-bazel",
+  "version": "0.0.0",
+  "description": "A PostCSS plugin to replace class names based on a customizable renaming scheme.",
+  "keywords": [
+    "postcss",
+    "css",
+    "postcss-plugin",
+    "bazel"
+  ],
+  "dependencies": {
+    "postcss-rename": "../"
+  },
+  "devDependencies": {
+    "@bazel/hide-bazel-files": "latest",
+    "@bazel/typescript": "^1.0.1",
+    "autoprefixer": "9.4.3",
+    "minimist": "1.2.0",
+    "postcss": "7.0.7",
+    "rtlcss": "^2.4.0",
+    "typescript": "^3.7.2"
+  },
+  "bazelWorkspaces": {
+    "com_github_google_rules_postcss_rename": {
+      "rootPath": "."
+    }
+  }
+}
