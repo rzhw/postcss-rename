@@ -63,6 +63,13 @@ it('renames with closure renaming type', async () => {
   assertPostcss(await run(input, { renamingType: 'closure' }), expectedOutput);
 });
 
+it('renames with prefix', async () => {
+  const input = await read('default.css');
+  const expectedOutput = await read('default.prefix.css');
+
+  assertPostcss(await run(input, { cssRenamingPrefix: 'x-' }), expectedOutput);
+});
+
 it('outputs renaming map as expected', async () => {
   const input = await read('default.css');
   const expectedOutput = await read('renaming_map.js');

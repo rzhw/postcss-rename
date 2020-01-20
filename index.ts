@@ -20,6 +20,7 @@ import * as selectorParser from 'postcss-selector-parser';
 import { IdentitySubstitutionMap } from './css/identity-substitution-map';
 import { MinimalSubstitutionMap } from './css/minimal-substitution-map';
 import { OutputRenamingMapFormat } from './css/output-renaming-map-format';
+import { PrefixingSubstitutionMap } from './css/prefixing-substitution-map';
 import { RecordingSubstitutionMap } from './css/recording-substitution-map';
 import { SimpleSubstitutionMap } from './css/simple-substitution-map';
 import { SplittingSubstitutionMap } from './css/splitting-substitution-map';
@@ -33,6 +34,7 @@ const RENAMING_TYPE = {
 interface Options {
   renamingType?: keyof typeof RENAMING_TYPE;
   outputRenamingMap?: string | null;
+  cssRenamingPrefix?: string | null;
 }
 
 module.exports = postcss.plugin(
@@ -43,12 +45,17 @@ module.exports = postcss.plugin(
         {
           renamingType: 'none',
           outputRenamingMap: '',
+          cssRenamingPrefix: '',
         },
         options
       );
 
+      let map = RENAMING_TYPE[opts.renamingType]();
+      if (opts.cssRenamingPrefix) {
+        map = new PrefixingSubstitutionMap(map, opts.cssRenamingPrefix);
+      }
       const substitutionMap = new RecordingSubstitutionMap.Builder()
-        .withSubstitutionMap(RENAMING_TYPE[opts.renamingType]())
+        .withSubstitutionMap(map)
         .build();
 
       const selectorProcessor = selectorParser(selectors => {
