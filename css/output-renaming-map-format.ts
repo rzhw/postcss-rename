@@ -15,22 +15,37 @@
  */
 
 import * as Preconditions from 'conditional';
+import {Map as ImmutableMap} from 'immutable';
+import * as readline from 'readline';
 import * as stream from 'stream';
 import * as util from 'util';
 import * as GuavaJS from './guavajs-wrapper';
 import Splitter = GuavaJS.Strings.Splitter;
 import { AssertionError } from 'assert';
 
+const streamToString = async (stream: stream.Readable) => {
+  return new Promise<string>((resolve, reject) => {
+    let chunks = [];
+    const onData = chunk => chunks.push(chunk);
+    stream.on('data', onData);
+    stream.once('error', reject);
+    stream.once('end', () => {
+      stream.removeListener('data', onData);
+      resolve(Buffer.concat(chunks).toString('utf8'));
+    });
+  });
+};
+
 /**
  * Defines the values for the --output-renaming-map-format flag in Closure
  * Stylesheets.
- * 
- * TODO(richardwa): Port the read parts.
  *
  * @author bolinfest@google.com (Michael Bolin)
  */
 interface OutputRenamingMapFormat {
   writeRenamingMap(renamingMap: Map<string, string>, renamingMapWriter: stream.Writable): void;
+  readRenamingMap(inReadable: stream.Readable): Promise<ImmutableMap<string, string>>;
+  readMapInto(inReadable: stream.Readable, builder: Map<string, string>): Promise<void>;
 }
 
 class OutputRenamingMapFormatImpl implements OutputRenamingMapFormat {
@@ -50,6 +65,56 @@ class OutputRenamingMapFormatImpl implements OutputRenamingMapFormat {
   writeRenamingMap(renamingMap: Map<string, string>, renamingMapWriter: stream.Writable) {
     renamingMapWriter.write(util.format(this.formatString,
         JSON.stringify([...renamingMap], null, 2)));
+  }
+
+  /**
+   * Reads the output of {@link #writeRenamingMap} so a renaming map can be reused from one compile
+   * to another.
+   */
+  async readRenamingMap(inReadable: stream.Readable): Promise<ImmutableMap<string, string>> {
+    const subsitutionMarker = "%s";
+    const formatStringSubstitutionIndex = this.formatString.indexOf(subsitutionMarker);
+    Preconditions.checkState(formatStringSubstitutionIndex >= 0, this.formatString);
+
+    let formatPrefix = this.formatString.substring(0, formatStringSubstitutionIndex);
+    let formatSuffix =
+        this.formatString.substring(formatStringSubstitutionIndex + subsitutionMarker.length);
+
+    // We read the whole input in, then strip prefixes and suffixes and then parse
+    // the rest.
+    let content = await streamToString(inReadable);
+
+    content = content.trim();
+    formatPrefix = formatPrefix.trim();
+    formatSuffix = formatSuffix.trim();
+
+    if (!content.startsWith(formatPrefix)
+        || !content.endsWith(formatSuffix)
+        || content.length < formatPrefix.length + formatSuffix.length) {
+      throw new Error("Input does not match format " + this.formatString + " : " + content);
+    }
+
+    content = content.substring(formatPrefix.length, content.length - formatSuffix.length);
+
+    const b = new Map<string, string>();
+    const json = JSON.parse(content);
+    this.readMapInto(json, b);
+
+    return ImmutableMap.of(b);
+  }
+
+  /**
+   * Reads the mapping portion of the formatted output.
+   *
+   * <p>This default implementation works for formats that substitute a JSON mapping from rewritten
+   * names to originals into their format string, and may be overridden by formats that do something
+   * different.
+   */
+  async readMapInto(inReadable: stream.Readable, builder: Map<string, string>) {
+    const json = JSON.parse(await streamToString(inReadable));
+    for (const [key, value] of Object.entries(json)) {
+      builder.set(key, value.toString());
+    }
   }
 
   /** Splitter used for CLOSURE_COMPILED_SPLIT_HYPHENS format. */
@@ -114,6 +179,17 @@ class OutputRenamingMapFormatImpl implements OutputRenamingMapFormat {
       renamingMapWriter.write('\n');
     }
   }
+
+  static async readOnePerLine(
+      separator: string, inReadable: stream.Readable, builder: Map<string, string>) {
+    for await (const line of readline.createInterface({input: inReadable})) {
+      const eq = line.indexOf(separator);
+      if (eq < 0 && !line.length) {
+        throw new Error("Line is missing a '" + separator + "': " + line);
+      }
+      builder.set(line.substring(0, eq), line.substring(eq + 1));
+    }
+  }
 }
 
 /* tslint:disable:no-namespace */
@@ -173,9 +249,9 @@ namespace OutputRenamingMapFormat {
       // have to worry about adding support for comments.
     }
 
-    /*readMapInto(in: any, builder: any) {
-      readOnePerLine('=', in, builder);
-    }*/
+    async readMapInto(inReadable: stream.Readable, builder: Map<string, string>) {
+      await OutputRenamingMapFormatImpl.readOnePerLine('=', inReadable, builder);
+    }
   };
   export const PROPERTIES = () => new PropertiesImpl();
 
@@ -188,11 +264,9 @@ namespace OutputRenamingMapFormat {
       OutputRenamingMapFormatImpl.writeOnePerLine(':', renamingMap, renamingMapWriter);
     }
 
-    /*void readMapInto(
-        BufferedReader in, ImmutableMap.Builder<? super String, ? super String> builder)
-        throws IOException {
-      readOnePerLine(':', in, builder);
-    }*/
+    async readMapInto(inReadable: stream.Readable, builder: Map<string, string>) {
+      await OutputRenamingMapFormatImpl.readOnePerLine(':', inReadable, builder);
+    }
   };
   export const JSCOMP_VARIABLE_MAP = () => new JscompVariableMapImpl();
 }
