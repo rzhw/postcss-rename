@@ -16,6 +16,25 @@
 
 import {Map as ImmutableMap} from 'immutable';
 
+/**
+ * An interface for a one-to-one string mapping function.
+ * 
+ * This was ported from the Closure Stylesheets compiler, see
+ * https://github.com/google/closure-stylesheets/blob/master/src/com/google/common/css/MinimalSubstitutionMap.java
+ */
+interface SubstitutionMap {
+
+  /**
+   * Gets the string that should be substituted for {@code key}. The same
+   * value must be consistently returned for any particular {@code key}, and
+   * the returned value must not be returned for any other {@code key} value.
+   *
+   * @param key  the text to be replaced (never null)
+   * @return the value to substitute for {@code key}
+   */
+  get(key: string): string;
+}
+
 /* tslint:disable:no-namespace */
 namespace SubstitutionMap {
   /**
@@ -46,25 +65,6 @@ namespace SubstitutionMap {
   export interface Initializable extends SubstitutionMap {
     initializeWithMappings(initialMappings: ImmutableMap<string, string>): void;
   }
-}
-
-/**
- * An interface for a one-to-one string mapping function.
- * 
- * This was ported from the Closure Stylesheets compiler, see
- * https://github.com/google/closure-stylesheets/blob/master/src/com/google/common/css/MinimalSubstitutionMap.java
- */
-interface SubstitutionMap {
-
-  /**
-   * Gets the string that should be substituted for {@code key}. The same
-   * value must be consistently returned for any particular {@code key}, and
-   * the returned value must not be returned for any other {@code key} value.
-   *
-   * @param key  the text to be replaced (never null)
-   * @return the value to substitute for {@code key}
-   */
-  get(key: string): string;
 }
 
 export { SubstitutionMap };

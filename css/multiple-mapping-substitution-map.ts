@@ -18,6 +18,26 @@ import {SubstitutionMap} from './substitution-map';
 import {Map as ImmutableMap} from 'immutable';
 import * as Preconditions from 'conditional';
 
+/**
+ * {@link MultipleMappingSubstitutionMap} is a special type of
+ * {@link SubstitutionMap} that can create multiple mappings for a single
+ * lookup. This is particularly important with respect to CSS renaming.
+ * <p>
+ * For example, a {@link SplittingSubstitutionMap} may rename "goog-component"
+ * as "a-b", in which case it has created two renaming mappings: "a" -> "goog"
+ * and "b" -> "component", both of which are necessary to produce the full
+ * renaming map.
+ * <p>
+ * Note that in the case of {@link SplittingSubstitutionMap}, the map that is
+ * returned by {@link #getValueWithMappings(String)} does not contain
+ * "goog-component" as a key because the entries "goog" and "component" are
+ * sufficient to construct the renamed version of "goog-component". Therefore,
+ * the key passed into {@link #getValueWithMappings(String)} is not guaranteed
+ * to appear in the output.
+ * 
+ * This was ported from the Closure Stylesheets compiler, see
+ * https://github.com/google/closure-stylesheets/blob/f18951462ad034362fa6a117d16ffbb960220745/src/com/google/common/css/MultipleMappingSubstitutionMap.java
+ */
 /* tslint:disable:no-namespace */
 namespace MultipleMappingSubstitutionMap {
   /**
@@ -45,26 +65,6 @@ namespace MultipleMappingSubstitutionMap {
   };
 }
 
-/**
- * {@link MultipleMappingSubstitutionMap} is a special type of
- * {@link SubstitutionMap} that can create multiple mappings for a single
- * lookup. This is particularly important with respect to CSS renaming.
- * <p>
- * For example, a {@link SplittingSubstitutionMap} may rename "goog-component"
- * as "a-b", in which case it has created two renaming mappings: "a" -> "goog"
- * and "b" -> "component", both of which are necessary to produce the full
- * renaming map.
- * <p>
- * Note that in the case of {@link SplittingSubstitutionMap}, the map that is
- * returned by {@link #getValueWithMappings(String)} does not contain
- * "goog-component" as a key because the entries "goog" and "component" are
- * sufficient to construct the renamed version of "goog-component". Therefore,
- * the key passed into {@link #getValueWithMappings(String)} is not guaranteed
- * to appear in the output.
- * 
- * This was ported from the Closure Stylesheets compiler, see
- * https://github.com/google/closure-stylesheets/blob/f18951462ad034362fa6a117d16ffbb960220745/src/com/google/common/css/MultipleMappingSubstitutionMap.java
- */
 interface MultipleMappingSubstitutionMap extends SubstitutionMap {
   /**
    * Like an ordinary {@link SubstitutionMap}, this returns a value to
