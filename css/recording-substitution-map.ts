@@ -119,7 +119,8 @@ namespace RecordingSubstitutionMap {
      * calls AND.
      */
     shouldRecordMappingForCodeGeneration(p: Predicate<string>) {
-      this.shouldRecordMappingForCodeGenerationPredicate = (input) => this.shouldRecordMappingForCodeGenerationPredicate(input) && p(input);
+      const oldPredicate = this.shouldRecordMappingForCodeGenerationPredicate;
+      this.shouldRecordMappingForCodeGenerationPredicate = (input) => oldPredicate(input) && p(input);
       return this;
     }
 
