@@ -1,11 +1,11 @@
 goog.setCssNameMapping([
   [
     "a",
-    "key"
+    "container"
   ],
   [
     "b",
-    "key"
+    "image"
   ],
   [
     "c",
