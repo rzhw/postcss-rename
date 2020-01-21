@@ -183,6 +183,6 @@ export class MinimalSubstitutionMap implements SubstitutionMap.Initializable {
       i = Math.floor(i / this.charsRadix);
     }
 
-    return cssNameChars.join();
+    return cssNameChars.join('');
   }
 }
