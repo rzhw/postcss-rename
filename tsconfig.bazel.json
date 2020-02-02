@@ -13,13 +13,19 @@
       "node"
     ],
     "target": "es2015",
-    "strict": true,
     "typeRoots": [
       "./node_modules/@types"
     ]
   },
   "include": [
     "src/com/google/common/css/identity-substitution-map.ts",
+    "src/com/google/common/css/minimal-substitution-map.ts",
+    "src/com/google/common/css/multiple-mapping-substitution-map.ts",
+    "src/com/google/common/css/output-renaming-map-format.ts",
+    "src/com/google/common/css/prefixing-substitution-map.ts",
+    "src/com/google/common/css/recording-substitution-map.ts",
+    "src/com/google/common/css/simple-substitution-map.ts",
+    "src/com/google/common/css/splitting-substitution-map.ts",
     "src/com/google/common/css/substitution-map.ts",
     "typings/*.ts"
   ]

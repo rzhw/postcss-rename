@@ -92,11 +92,14 @@ ts_library(
         "identity-substitution-map.ts",
         "minimal-substitution-map.ts",
         "multiple-mapping-substitution-map.ts",
+        "output-renaming-map-format.ts",
         "prefixing-substitution-map.ts",
         "recording-substitution-map.ts",
+        "renaming-type.ts",
         "simple-substitution-map.ts",
         "splitting-substitution-map.ts",
         "substitution-map.ts",
+        "substitution-map-provider.ts",
     ],
     deps = [
       "@npm//@types",
@@ -121,9 +124,10 @@ npm_package_bin(
         "babel-out/multiple-mapping-substitution-map.js",
         "babel-out/prefixing-substitution-map.js",
         "babel-out/recording-substitution-map.js",
+        "babel-out/renaming-type.js",
         "babel-out/simple-substitution-map.js",
         "babel-out/splitting-substitution-map.js",
-        "babel-out/substitution-map.js"
+        "babel-out/substitution-map.js",
     ],
     data = [
         ":css_ts_js",
